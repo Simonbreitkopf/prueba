@@ -1,52 +1,42 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('addForm');
-    const nameInput = document.getElementById('name');
-    const list = document.getElementById('list');
-    const count = document.getElementById('count');
+const renderList = async () => {
+    list.innerHTML = '';
+    const response = await fetch('https://<your-vercel-app-name>.vercel.app/women');
+    const womenList = await response.json();
+    womenList.forEach((woman) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = woman.name;
 
-    let womenList = JSON.parse(localStorage.getItem('womenList')) || [];
-    let womenCount = womenList.length;
-
-    const updateCount = () => {
-        count.textContent = `Número de mujeres en la lista: ${womenCount}`;
-    };
-
-    const renderList = () => {
-        list.innerHTML = '';
-        womenList.forEach((name, index) => {
-            const listItem = document.createElement('li');
-            listItem.textContent = name;
-
-            const deleteBtn = document.createElement('span');
-            deleteBtn.textContent = 'Eliminar';
-            deleteBtn.classList.add('delete-btn');
-            deleteBtn.addEventListener('click', () => {
-                womenList.splice(index, 1);
-                localStorage.setItem('womenList', JSON.stringify(womenList));
-                womenCount--;
-                renderList();
-                updateCount();
-            });
-
-            listItem.appendChild(deleteBtn);
-            list.appendChild(listItem);
-        });
-    };
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = nameInput.value.trim();
-        if (name) {
-            womenList.push(name);
-            localStorage.setItem('womenList', JSON.stringify(womenList));
-            womenCount++;
+        const deleteBtn = document.createElement('span');
+        deleteBtn.textContent = 'Eliminar';
+        deleteBtn.classList.add('delete-btn');
+        deleteBtn.addEventListener('click', async () => {
+            await fetch(`https://<your-vercel-app-name>.vercel.app/women/${woman._id}`, { method: 'DELETE' });
             renderList();
             updateCount();
-            nameInput.value = '';
-        }
-    });
+        });
 
-    // Initial render
-    renderList();
+        listItem.appendChild(deleteBtn);
+        list.appendChild(listItem);
+    });
     updateCount();
+};
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    if (name) {
+        await fetch('https://<your-vercel-app-name>.vercel.app/women', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name })
+        });
+        nameInput.value = '';
+        renderList();
+    }
 });
+
+// Initial render
+renderList();
+updateCount();
